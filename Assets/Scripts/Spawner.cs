@@ -10,6 +10,9 @@ public class Spawner : MonoBehaviour
     private float timer;
     public float towerGap = 2.5f;
 
+    public GameObject attackplanePrefab;
+    public float attactplanespawnChance = 0.15f;
+
     private void Update()
     {
         timer += Time.deltaTime;
@@ -22,6 +25,12 @@ public class Spawner : MonoBehaviour
 
     private void Spawn()
     {
+        if (Random.value < attactplanespawnChance)
+        {
+            SpawnAttackPlane();
+            return;
+        }
+
         GameObject towers = Instantiate(prefab, transform.position, Quaternion.identity);
         towers.transform.position += Vector3.up * Random.Range(minHeight, maxHeight);
     }
@@ -29,6 +38,19 @@ public class Spawner : MonoBehaviour
     public void SetSpawnRate(float rate)
     {
         spawnRate = rate;
+    }
+
+    private void SpawnAttackPlane()
+    {
+        Vector2[] corners = {
+        new Vector2(-8, 5),   // ??
+        new Vector2(8, 5),    // ??
+        new Vector2(-8, -5),  // ??
+        new Vector2(8, -5)    // ??
+    };
+
+        Vector2 spawnPos = corners[Random.Range(0, corners.Length)];
+        GameObject plane = Instantiate(attackplanePrefab, spawnPos, Quaternion.identity);
     }
 
     public void SetTowerGap(float gap)
