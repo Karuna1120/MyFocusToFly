@@ -2008,7 +2008,7 @@ MonoBehaviour:
   minHeight: -1.5
   maxHeight: 1.5
   towerGap: 2.5
-  attackplanePrefab: {fileID: 0}
+  attackplanePrefab: {fileID: 6674105067690911797, guid: 7fbb1af07184e344695bf80385ada184, type: 3}
   attactplanespawnChance: 0.15
 --- !u!1 &2056286456
 GameObject:
