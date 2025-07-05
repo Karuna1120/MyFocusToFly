@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class Spawner : MonoBehaviour
 {
@@ -11,7 +12,10 @@ public class Spawner : MonoBehaviour
     public float towerGap = 2.5f;
 
     public GameObject attackplanePrefab;
-    public float attactplanespawnChance = 0.15f;
+    public float attactplanespawnChance = 0.08f; // ????
+
+    private bool planeOnCooldown = false;
+    public float planeCooldownDuration = 4f; // ???????????
 
     private void Update()
     {
@@ -25,7 +29,7 @@ public class Spawner : MonoBehaviour
 
     private void Spawn()
     {
-        if (Random.value < attactplanespawnChance)
+        if (!planeOnCooldown && Random.value < attactplanespawnChance)
         {
             SpawnAttackPlane();
             return;
@@ -40,21 +44,42 @@ public class Spawner : MonoBehaviour
         spawnRate = rate;
     }
 
-    private void SpawnAttackPlane()
-    {
-        Vector2[] corners = {
-        new Vector2(-8, 5),   // ??
-        new Vector2(8, 5),    // ??
-        new Vector2(-8, -5),  // ??
-        new Vector2(8, -5)    // ??
-    };
-
-        Vector2 spawnPos = corners[Random.Range(0, corners.Length)];
-        GameObject plane = Instantiate(attackplanePrefab, spawnPos, Quaternion.identity);
-    }
-
     public void SetTowerGap(float gap)
     {
         towerGap = gap;
+    }
+
+    private void SpawnAttackPlane()
+    {
+        StartCoroutine(ShowFlashAndSpawn());
+    }
+
+    private IEnumerator ShowFlashAndSpawn()
+    {
+        ScreenFlash screenFlash = FindObjectOfType<ScreenFlash>();
+
+        if (screenFlash != null)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                screenFlash.Flash();
+                yield return new WaitForSeconds(0.3f);
+                yield return new WaitForSeconds(0.3f);
+            }
+        }
+
+        yield return new WaitForSeconds(0.5f); // ????
+
+        Vector2[] leftCorners = {
+            new Vector2(-8, 5),
+            new Vector2(-8, -5)
+        };
+
+        Vector2 spawnPos = leftCorners[Random.Range(0, leftCorners.Length)];
+        Instantiate(attackplanePrefab, spawnPos, Quaternion.identity);
+
+        planeOnCooldown = true;
+        yield return new WaitForSeconds(planeCooldownDuration); // ????
+        planeOnCooldown = false;
     }
 }
