@@ -77,15 +77,15 @@ public class Player : MonoBehaviour
     {
         if (other.CompareTag("Obstacle"))
         {
-            FindObjectOfType<GameManager>().GameOver();
+            FindObjectOfType<GameManager2>().GameOver();
         }
         else if (other.CompareTag("Scoring"))
         {
-            FindObjectOfType<GameManager>().IncreaseScore();
+            FindObjectOfType<GameManager2>().IncreaseScore();
         }
         else if (other.CompareTag("Deadzone"))
         {
-            FindObjectOfType<GameManager>().GameOver();
+            FindObjectOfType<GameManager2>().GameOver();
         }
     }
 

@@ -2,28 +2,32 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
+using System.Collections;
 
 public class GameManager : MonoBehaviour
 {
-    // ——— Gameplay reference ————————————
+    
     public Player player;
 
-    // ——— UI references ————————————————
-    public TMP_Text scoreText;              // running score
+    
+    public TMP_Text scoreText;              
 
-    public GameObject titleText;        // <<< new (set it in Inspector)
+    public GameObject titleText;        
     public GameObject playButton;
 
     public GameObject gameOverPanel;
     public GameObject restartButton;
     public GameObject summaryPanel;
     public TMP_Text summaryScoreText;
+    public GameObject fakePlayerPrefab;
+    private bool hasSpawnedFakes = false;
 
-    // ——— Internal state ————————————————
     private int score = 0;
     private int highScore = 0;
 
-    // ?????????????????????????????????????????
+    private int lastFakeGroupScore = 0;
+
+
     private void Awake()
     {
         Application.targetFrameRate = 60;
@@ -31,9 +35,7 @@ public class GameManager : MonoBehaviour
         Pause();                         // freeze on load
     }
 
-    /*?????????????????????????????????????????
-     *  BUTTON EVENTS
-     *????????????????????????????????????????*/
+    
 
     public void Play()
     {
@@ -79,14 +81,16 @@ public class GameManager : MonoBehaviour
     public void BackToMenu() =>
         SceneManager.LoadScene("MainMenu");
 
-    /*?????????????????????????????????????????
-     *  Helpers
-     *????????????????????????????????????????*/
-
     public void IncreaseScore()
     {
         score++;
         scoreText.text = score.ToString();
+
+        if (score % 10 == 0 && score != lastFakeGroupScore)
+        {
+            lastFakeGroupScore = score;
+            StartCoroutine(SpawnFakePlayers());
+        }
     }
 
     public void ResetData()
@@ -105,4 +109,21 @@ public class GameManager : MonoBehaviour
         if (titleText) titleText.SetActive(true);
         playButton.SetActive(true);
     }
+    private IEnumerator SpawnFakePlayers()
+    {
+        float minY = Camera.main.ScreenToWorldPoint(new Vector3(0, 0)).y;
+        float maxY = Camera.main.ScreenToWorldPoint(new Vector3(0, Screen.height)).y;
+
+        for (int i = 0; i < 10; i++)
+        {
+            float randomY = Random.Range(minY, maxY);
+            Vector3 spawnPos = new Vector3(-9f, randomY, 0);
+
+            GameObject fake = Instantiate(fakePlayerPrefab, spawnPos, Quaternion.identity);
+            
+
+            yield return new WaitForSeconds(0.2f);
+        }
+    }
+
 }

@@ -250,6 +250,7 @@ MonoBehaviour:
   restartButton: {fileID: 2056286456}
   summaryPanel: {fileID: 97051616}
   summaryScoreText: {fileID: 615389529}
+  fakePlayerPrefab: {fileID: 4935668820599745457, guid: 3cbac031554d88a43aff3ebe6d44b32b, type: 3}
 --- !u!1 &263798570
 GameObject:
   m_ObjectHideFlags: 0
