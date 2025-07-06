@@ -1,3 +1,4 @@
+// GameManager2.cs with Black Flash Panel and Fake Interference
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
@@ -7,11 +8,9 @@ using System.Collections;
 public class GameManager2 : MonoBehaviour
 {
     public Player player;
-
     public TMP_Text scoreText;
     public GameObject titleText;
     public GameObject playButton;
-
     public GameObject gameOverPanel;
     public GameObject restartButton;
     public GameObject summaryPanel;
@@ -19,6 +18,8 @@ public class GameManager2 : MonoBehaviour
 
     public GameObject fakePlayerPrefab;
     public GameObject fakeShadowPrefab;
+    public GameObject blackFlashPanel; // full-screen black panel
+    public AudioClip blackFlashSound;
 
     private int score = 0;
     private int highScore = 0;
@@ -26,16 +27,27 @@ public class GameManager2 : MonoBehaviour
     private Coroutine groupSpawnRoutine;
     private Coroutine singleSpawnRoutine;
     private Coroutine mirrorRoutine;
+    private Coroutine flashRoutine;  
+    private AudioSource flashAudioSource;
 
     private void Awake()
     {
         Application.targetFrameRate = 60;
         highScore = PlayerPrefs.GetInt("highScore", 0);
         Pause();
+
+        flashAudioSource = gameObject.AddComponent<AudioSource>();
+        flashAudioSource.loop = true;
+        flashAudioSource.playOnAwake = false;
+        flashAudioSource.clip = blackFlashSound;
     }
 
     public void Play()
     {
+        // Clean up old fake players
+        foreach (var f in FindObjectsOfType<FakePlayerMover>()) Destroy(f.gameObject);
+        foreach (var s in FindObjectsOfType<FakeShadowPlayer>()) Destroy(s.gameObject);
+
         score = 0;
         scoreText.text = score.ToString();
 
@@ -45,26 +57,27 @@ public class GameManager2 : MonoBehaviour
         restartButton.SetActive(false);
         summaryPanel.SetActive(false);
 
-        foreach (Towers t in FindObjectsOfType<Towers>())
-            Destroy(t.gameObject);
+        foreach (Towers t in FindObjectsOfType<Towers>()) Destroy(t.gameObject);
 
         Time.timeScale = 1f;
         player.enabled = true;
 
-        // Start all fake spawn loops
+        // Start all fake spawners
         groupSpawnRoutine = StartCoroutine(LoopSpawnFakeGroup());
         singleSpawnRoutine = StartCoroutine(LoopSpawnFakeSingle());
         mirrorRoutine = StartCoroutine(LoopSpawnFakeShadow());
+        flashRoutine = StartCoroutine(LoopRandomBlackFlash());
     }
 
     public void GameOver()
     {
-        Debug.Log("GameOver Triggered");
         Pause();
 
         restartButton.SetActive(true);
         gameOverPanel.SetActive(true);
         summaryPanel.SetActive(true);
+        if (blackFlashPanel != null) blackFlashPanel.SetActive(false);
+
 
         if (score > highScore)
         {
@@ -74,10 +87,11 @@ public class GameManager2 : MonoBehaviour
 
         summaryScoreText.text = $"Score: {score}  |  High Score: {highScore}";
 
-        // Stop coroutines
+        // Stop routines
         if (groupSpawnRoutine != null) StopCoroutine(groupSpawnRoutine);
         if (singleSpawnRoutine != null) StopCoroutine(singleSpawnRoutine);
         if (mirrorRoutine != null) StopCoroutine(mirrorRoutine);
+        if (flashRoutine != null) StopCoroutine(flashRoutine);
     }
 
     public void Restart() => Play();
@@ -93,7 +107,6 @@ public class GameManager2 : MonoBehaviour
     {
         PlayerPrefs.DeleteAll();
         highScore = 0;
-        Debug.Log("PlayerPrefs reset.");
     }
 
     private void Pause()
@@ -105,7 +118,7 @@ public class GameManager2 : MonoBehaviour
         playButton.SetActive(true);
     }
 
-    // ?? Loop: spawn 10 fake players every 5 seconds
+    // Spawn 25 fake players at random heights every few seconds
     private IEnumerator LoopSpawnFakeGroup()
     {
         while (true)
@@ -115,7 +128,7 @@ public class GameManager2 : MonoBehaviour
         }
     }
 
-    // ?? Loop: spawn 1 fake player near player every 8 seconds
+    // Spawn 1 fake near player every 8 seconds
     private IEnumerator LoopSpawnFakeSingle()
     {
         while (true)
@@ -125,7 +138,7 @@ public class GameManager2 : MonoBehaviour
         }
     }
 
-    // ?? Loop: spawn 1 mirror fake near player every 3 seconds, lasting 5 seconds
+    // Spawn 1 mirror fake that mimics player every 3 seconds for 3 seconds
     private IEnumerator LoopSpawnFakeShadow()
     {
         while (true)
@@ -133,7 +146,6 @@ public class GameManager2 : MonoBehaviour
             yield return new WaitForSeconds(3f);
 
             GameObject fake = Instantiate(fakeShadowPrefab, player.transform.position, Quaternion.identity);
-
             var controller = fake.AddComponent<FakeShadowPlayer>();
             controller.player = player.transform;
             controller.sprites = player.GetComponent<Player>().sprites;
@@ -143,7 +155,45 @@ public class GameManager2 : MonoBehaviour
         }
     }
 
-    // ?? Spawn 10 fake players at random heights
+    // Random black screen that flashes and stays for 4 seconds
+    private IEnumerator LoopRandomBlackFlash()
+    {
+        Image img = blackFlashPanel.GetComponent<Image>();
+        if (img == null) yield break;
+
+        while (true)
+        {
+            yield return new WaitForSeconds(Random.Range(5f, 10f));
+            blackFlashPanel.SetActive(true);
+            if (flashAudioSource && blackFlashSound)
+                flashAudioSource.Play();
+
+
+            float flashDuration = 4f;
+            float flashInterval = 0.2f;
+            float timer = 0f;
+            bool visible = true;
+
+            // 4 sec
+            while (timer < flashDuration)
+            {
+                float alpha = visible ? 1f : 0f;  // color alpha value
+                img.color = new Color(0f, 0f, 0f, alpha);
+                visible = !visible;
+
+                yield return new WaitForSeconds(flashInterval);
+                timer += flashInterval;
+            }
+            if (flashAudioSource.isPlaying)
+                flashAudioSource.Stop();
+
+
+            // hide the panel after flashing
+            blackFlashPanel.SetActive(false);
+        }
+    }
+
+    // Spawns a group of 25 fake players
     private IEnumerator SpawnFakePlayers()
     {
         float minY = Camera.main.ScreenToWorldPoint(new Vector3(0, 0)).y;
@@ -161,7 +211,7 @@ public class GameManager2 : MonoBehaviour
         }
     }
 
-    // ?? Spawn 1 fake player at the real player's position
+    // Spawn 1 fake player at player's position
     private void SpawnTargetFakePlayer()
     {
         Vector3 spawnPos = player.transform.position;

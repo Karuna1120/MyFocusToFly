@@ -6,8 +6,14 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/GameScene.unity
-    guid: 8c9cfa26abfee488c85f1582747f6a02
+    path: Assets/Scenes/MainMenu.unity
+    guid: ac81d842d435e6d4fb74d8417ac88445
+  - enabled: 1
+    path: Assets/Scenes/FlankerScene.unity
+    guid: de054f573ec72ae49b1c5db3d889b152
+  - enabled: 1
+    path: Assets/Scenes/GameSceneReal.unity
+    guid: 396c4fd8358b71c48a7011d2d0091def
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0
