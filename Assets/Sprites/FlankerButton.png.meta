@@ -160,7 +160,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      FlankerButton_0: -6012579516784187456
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

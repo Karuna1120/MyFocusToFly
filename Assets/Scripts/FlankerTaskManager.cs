@@ -1,4 +1,5 @@
-// Updated FlankerTaskManager.cs with Practice + Test Phases
+// FlankerTaskManager.cs
+// Includes Practice + Test Phases with basic UI and summary output
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -9,27 +10,28 @@ using UnityEngine.SceneManagement;
 public class FlankerTaskManager : MonoBehaviour
 {
     [Header("UI References")]
-    public GameObject rulePanel;
-    public TMP_Text stimulusText;
-    public TMP_Text feedbackText;
-    public GameObject summaryPanel;
-    public TMP_Text summaryText;
-    public Button button0;
-    public Button button1;
+    public GameObject rulePanel;            // Panel to show rules
+    public TMP_Text stimulusText;           // Stimulus display text
+    public TMP_Text feedbackText;           // Feedback message (Correct/Rule)
+    public GameObject summaryPanel;         // Summary UI panel
+    public TMP_Text summaryText;            // Summary result text
+    public Button button0;                  // Button for group 0
+    public Button button1;                  // Button for group 1
 
     [Header("Settings")]
-    public int practiceTrialsCount = 5;
-    public int testTrialsCount = 35;
-    public float feedbackDuration = 0.5f;
-    public float ruleReminderDuration = 2f;
+    public int practiceTrialsCount = 5;     // Number of practice trials
+    public int testTrialsCount = 40;        // Number of scored test trials
+    public float feedbackDuration = 0.5f;   // How long feedback appears
+    public float ruleReminderDuration = 2f; // Time to show rule if wrong
+
     public void BackToMenu() => SceneManager.LoadScene("MainMenu");
 
     private class TrialData
     {
         public string stimulus;
-        public char correctAnswer; // '0' or '1'
-        public bool isCongruent;
-        public bool isPractice;
+        public char correctAnswer;      // '0' or '1'
+        public bool isCongruent;        // congruent or incongruent
+        public bool isPractice;         // true if practice phase
     }
 
     private class ResultData
@@ -61,11 +63,13 @@ public class FlankerTaskManager : MonoBehaviour
 
     void Update()
     {
+        // Start task when player presses space or touches screen
         if (!gameStarted && (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0)))
         {
             StartTask();
         }
 
+        // Accept key input during trial
         if (awaitingInput)
         {
             if (Input.GetKeyDown(KeyCode.Alpha0)) OnAnswer('0');
@@ -166,9 +170,10 @@ public class FlankerTaskManager : MonoBehaviour
 
     void ShowSummary()
     {
-        // Show back button after summary
+        // Show back button
         Button backButton = summaryPanel.GetComponentInChildren<Button>();
         if (backButton != null) backButton.gameObject.SetActive(true);
+
         int correct = 0;
         float totalRT = 0f, congruentRT = 0f, incongruentRT = 0f;
         int totalCount = 0, congruentCount = 0, incongruentCount = 0;
@@ -180,6 +185,7 @@ public class FlankerTaskManager : MonoBehaviour
             totalCount++;
             if (r.isCorrect) correct++;
             totalRT += r.reactionTime;
+
             if (r.isCongruent)
             {
                 congruentRT += r.reactionTime;

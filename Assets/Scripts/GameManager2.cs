@@ -19,7 +19,7 @@ public class GameManager2 : MonoBehaviour
     public GameObject fakePlayerPrefab;
     public GameObject fakeShadowPrefab;
     public GameObject blackFlashPanel; // full-screen black panel
-    public AudioClip blackFlashSound;
+
 
     private int score = 0;
     private int highScore = 0;
@@ -28,7 +28,7 @@ public class GameManager2 : MonoBehaviour
     private Coroutine singleSpawnRoutine;
     private Coroutine mirrorRoutine;
     private Coroutine flashRoutine;  
-    private AudioSource flashAudioSource;
+
 
     private void Awake()
     {
@@ -36,10 +36,7 @@ public class GameManager2 : MonoBehaviour
         highScore = PlayerPrefs.GetInt("highScore", 0);
         Pause();
 
-        flashAudioSource = gameObject.AddComponent<AudioSource>();
-        flashAudioSource.loop = true;
-        flashAudioSource.playOnAwake = false;
-        flashAudioSource.clip = blackFlashSound;
+
     }
 
     public void Play()
@@ -165,8 +162,7 @@ public class GameManager2 : MonoBehaviour
         {
             yield return new WaitForSeconds(Random.Range(5f, 10f));
             blackFlashPanel.SetActive(true);
-            if (flashAudioSource && blackFlashSound)
-                flashAudioSource.Play();
+
 
 
             float flashDuration = 4f;
@@ -184,8 +180,6 @@ public class GameManager2 : MonoBehaviour
                 yield return new WaitForSeconds(flashInterval);
                 timer += flashInterval;
             }
-            if (flashAudioSource.isPlaying)
-                flashAudioSource.Stop();
 
 
             // hide the panel after flashing
