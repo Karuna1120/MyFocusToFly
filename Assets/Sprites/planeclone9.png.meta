@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: e630ad4169ce99c468125b51eaa2841f
+guid: 7a72b8f7af461d048a52a8c216382033
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 5919757094491595866
-    second: AttactPlane_Left_0
+      213: 3463602673438636897
+    second: planeclone9_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -126,13 +126,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: AttactPlane_Left_0
+      name: planeclone9_0
       rect:
         serializedVersion: 2
-        x: 404
-        y: 366
-        width: 4739
-        height: 2625
+        x: 132
+        y: 1239
+        width: 2125
+        height: 843
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -141,8 +141,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: a5425c596b3372250800000000000000
-      internalID: 5919757094491595866
+      spriteID: 16b3761d740311030800000000000000
+      internalID: 3463602673438636897
       vertices: []
       indices: 
       edges: []
@@ -161,7 +161,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      AttactPlane_Left_0: 5919757094491595866
+      planeclone9_0: 3463602673438636897
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

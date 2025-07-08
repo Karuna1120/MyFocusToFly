@@ -1,5 +1,3 @@
-// FlankerTaskManager.cs
-// Includes Practice + Test Phases with basic UI and summary output
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -9,31 +7,41 @@ using UnityEngine.SceneManagement;
 
 public class FlankerTaskManager : MonoBehaviour
 {
-    [Header("UI References")]
-    public GameObject rulePanel;            // Panel to show rules
-    public TMP_Text stimulusText;           // Stimulus display text
-    public TMP_Text feedbackText;           // Feedback message (Correct/Rule)
-    public GameObject summaryPanel;         // Summary UI panel
-    public TMP_Text summaryText;            // Summary result text
-    public Button button0;                  // Button for group 0
-    public Button button1;                  // Button for group 1
+    /*?????????????????????????? UI REFERENCES ??????????????????????????*/
+    [Header("UI References (drag in Inspector)")]
+    public GameObject rulePanel;          // “Press space to start” panel
+    public TMP_Text stimulusText;       // Shows 5-arrow stimulus
+    public TMP_Text feedbackText;       // Green “Correct”
+    public GameObject summaryPanel;       // Final stats screen
+    public TMP_Text summaryText;
+    public Button button0;            // On-screen “0”  (? Right)
+    public Button button1;            // On-screen “1”  (? Left)
+    public GameObject errorPanel;         // Wrong-answer reminder
+    public GameObject timeoutPanel;       // Slow-response reminder
 
-    [Header("Settings")]
-    public int practiceTrialsCount = 5;     // Number of practice trials
-    public int testTrialsCount = 40;        // Number of scored test trials
-    public float feedbackDuration = 0.5f;   // How long feedback appears
-    public float ruleReminderDuration = 2f; // Time to show rule if wrong
+    /* Crosses that must blink red ? white */
+    public TMP_Text errorCrossText;     // Inside ErrorPanel
+    public TMP_Text timeoutCrossText;   // Inside TimeoutPanel
+
+    /*?????????????????????????? TASK SETTINGS ??????????????????????????*/
+    [Header("Task Settings")]
+    public int practiceTrialsCount = 5;
+    public int testTrialsCount = 40;
+    public float feedbackDuration = 0.5f;   // seconds
+    public float ruleReminderDuration = 2f;     // seconds
+    public float timeoutSeconds = 3f;     // response deadline
+    public float crossBlinkInterval = 0.25f;  // red/white toggle speed
 
     public void BackToMenu() => SceneManager.LoadScene("MainMenu");
 
+    /*?????????????????????????? INTERNAL DATA ??????????????????????????*/
     private class TrialData
     {
         public string stimulus;
-        public char correctAnswer;      // '0' or '1'
-        public bool isCongruent;        // congruent or incongruent
-        public bool isPractice;         // true if practice phase
+        public char correctAnswer;
+        public bool isCongruent;
+        public bool isPractice;
     }
-
     private class ResultData
     {
         public bool isCorrect;
@@ -42,70 +50,99 @@ public class FlankerTaskManager : MonoBehaviour
         public bool isPractice;
     }
 
-    private List<TrialData> trials = new List<TrialData>();
-    private List<ResultData> results = new List<ResultData>();
-
+    private readonly List<TrialData> trials = new();
+    private readonly List<ResultData> results = new();
     private int currentTrialIndex = 0;
     private float trialStartTime;
     private bool awaitingInput = false;
     private bool gameStarted = false;
 
-    void Start()
+    private Coroutine activeBlinkRoutine;         // handle for blinking coroutine
+
+    /*?????????????????????????? UNITY EVENTS ??????????????????????????*/
+    private void Start()
     {
+        // initial UI state
         rulePanel.SetActive(true);
         feedbackText.gameObject.SetActive(false);
         summaryPanel.SetActive(false);
         stimulusText.gameObject.SetActive(false);
+        errorPanel.SetActive(false);
+        timeoutPanel.SetActive(false);
 
-        button0.onClick.AddListener(() => OnAnswer('0'));
-        button1.onClick.AddListener(() => OnAnswer('1'));
+        // on-screen buttons
+        button0.onClick.AddListener(() => OnAnswer('0'));   // Right
+        button1.onClick.AddListener(() => OnAnswer('1'));   // Left
     }
 
-    void Update()
+    private void Update()
     {
-        // Start task when player presses space or touches screen
-        if (!gameStarted && (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0)))
+        /* ?? Wait for player to start ?? */
+        if (!gameStarted &&
+            (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0)))
         {
             StartTask();
         }
 
-        // Accept key input during trial
-        if (awaitingInput)
+        /* ?? During a trial ?? */
+        if (!awaitingInput) return;
+
+        // check timeout
+        if (Time.time - trialStartTime > timeoutSeconds)
         {
-            if (Input.GetKeyDown(KeyCode.Alpha0)) OnAnswer('0');
-            else if (Input.GetKeyDown(KeyCode.Alpha1)) OnAnswer('1');
+            StartCoroutine(ShowTimeout());
+            return;
         }
+
+        // keyboard answers
+        if (Input.GetKeyDown(KeyCode.Alpha0)) OnAnswer('0');
+        else if (Input.GetKeyDown(KeyCode.Alpha1)) OnAnswer('1');
     }
 
-    void StartTask()
+    /*?????????????????????????? TASK FLOW ??????????????????????????*/
+    private void StartTask()
     {
         rulePanel.SetActive(false);
         stimulusText.gameObject.SetActive(true);
         gameStarted = true;
+
         GenerateTrials();
         ShowNextTrial();
     }
 
-    void GenerateTrials()
+    private void GenerateTrials()
     {
-        char[] group0 = { 'C', 'S' };
-        char[] group1 = { 'H', 'K' };
+        string L = "\u2190";                // ?
+        string R = "\u2192";                // ?
 
+        string[] stimuli = {
+            new string(L[0], 5),            // ?????  (centre left)
+            new string(R[0], 5),            // ?????  (centre right)
+            R + R + L + R + R,              // ?????  (incongruent left)
+            L + L + R + L + L               // ?????  (incongruent right)
+        };
+
+        /* 1 = Left, 0 = Right */
+        char[] correctAnswers = { '1', '0', '1', '0' };
+        bool[] congruentFlags = { true, true, false, false };
+
+        trials.Clear();
         for (int i = 0; i < practiceTrialsCount + testTrialsCount; i++)
         {
             bool isPractice = i < practiceTrialsCount;
-            bool isCongruent = Random.value > 0.5f;
-            char center = Random.value > 0.5f ? group0[Random.Range(0, 2)] : group1[Random.Range(0, 2)];
-            char flank = isCongruent ? center : (System.Array.Exists(group0, c => c == center) ? group1[Random.Range(0, 2)] : group0[Random.Range(0, 2)]);
+            int idx = Random.Range(0, stimuli.Length);
 
-            string stim = $"{flank}{flank}{center}{flank}{flank}";
-            char correctAnswer = (System.Array.Exists(group1, c => c == center)) ? '1' : '0';
-
-            trials.Add(new TrialData { stimulus = stim, correctAnswer = correctAnswer, isCongruent = isCongruent, isPractice = isPractice });
+            trials.Add(new TrialData
+            {
+                stimulus = stimuli[idx],
+                correctAnswer = correctAnswers[idx],
+                isCongruent = congruentFlags[idx],
+                isPractice = isPractice
+            });
         }
     }
 
-    void ShowNextTrial()
+    private void ShowNextTrial()
     {
         if (currentTrialIndex >= trials.Count)
         {
@@ -122,100 +159,132 @@ public class FlankerTaskManager : MonoBehaviour
     public void OnAnswer(char answer)
     {
         if (!awaitingInput) return;
-
         awaitingInput = false;
+
         var trial = trials[currentTrialIndex];
         float rt = Time.time - trialStartTime;
-        bool isCorrect = (answer == trial.correctAnswer);
+        bool ok = (answer == trial.correctAnswer);
 
         results.Add(new ResultData
         {
-            isCorrect = isCorrect,
+            isCorrect = ok,
             reactionTime = rt,
             isCongruent = trial.isCongruent,
             isPractice = trial.isPractice
         });
 
-        if (isCorrect)
-        {
+        if (ok)
             StartCoroutine(ShowFeedback("Correct", Color.green, feedbackDuration));
-        }
         else
+            StartCoroutine(ShowError());
+    }
+
+    /*?????????????????????????? COROUTINES ??????????????????????????*/
+    private IEnumerator ShowFeedback(string msg, Color col, float dur)
+    {
+        feedbackText.text = msg;
+        feedbackText.color = col;
+        feedbackText.gameObject.SetActive(true);
+
+        yield return new WaitForSeconds(dur);
+
+        feedbackText.gameObject.SetActive(false);
+        currentTrialIndex++;
+        ShowNextTrial();
+    }
+
+    private IEnumerator ShowError()
+    {
+        errorPanel.SetActive(true);
+        if (errorCrossText != null)
+            activeBlinkRoutine = StartCoroutine(BlinkCross(errorCrossText));
+
+        yield return new WaitForSeconds(ruleReminderDuration);
+
+        if (activeBlinkRoutine != null) StopCoroutine(activeBlinkRoutine);
+        if (errorCrossText != null) errorCrossText.color = Color.red;
+
+        errorPanel.SetActive(false);
+        currentTrialIndex++;
+        ShowNextTrial();
+    }
+
+    private IEnumerator ShowTimeout()
+    {
+        awaitingInput = false;
+
+        /* log timeout as incorrect */
+        var trial = trials[currentTrialIndex];
+        results.Add(new ResultData
         {
-            StartCoroutine(ShowRuleReminder());
+            isCorrect = false,
+            reactionTime = timeoutSeconds,
+            isCongruent = trial.isCongruent,
+            isPractice = trial.isPractice
+        });
+
+        timeoutPanel.SetActive(true);
+        if (timeoutCrossText != null)
+            activeBlinkRoutine = StartCoroutine(BlinkCross(timeoutCrossText));
+
+        yield return new WaitForSeconds(ruleReminderDuration);
+
+        if (activeBlinkRoutine != null) StopCoroutine(activeBlinkRoutine);
+        if (timeoutCrossText != null) timeoutCrossText.color = Color.red;
+
+        timeoutPanel.SetActive(false);
+        currentTrialIndex++;
+        ShowNextTrial();
+    }
+
+    private IEnumerator BlinkCross(TMP_Text cross)
+    {
+        bool red = false;
+        while (true)
+        {
+            cross.color = red ? Color.red : Color.white;
+            red = !red;
+            yield return new WaitForSeconds(crossBlinkInterval);
         }
     }
 
-    IEnumerator ShowFeedback(string text, Color color, float duration)
+    /*?????????????????????????? SUMMARY ??????????????????????????*/
+    private void ShowSummary()
     {
-        feedbackText.text = text;
-        feedbackText.color = color;
-        feedbackText.gameObject.SetActive(true);
-        yield return new WaitForSeconds(duration);
-        feedbackText.gameObject.SetActive(false);
-
-        currentTrialIndex++;
-        ShowNextTrial();
-    }
-
-    IEnumerator ShowRuleReminder()
-    {
-        rulePanel.SetActive(true);
-        yield return new WaitForSeconds(ruleReminderDuration);
-        rulePanel.SetActive(false);
-
-        currentTrialIndex++;
-        ShowNextTrial();
-    }
-
-    void ShowSummary()
-    {
-        // Show back button
-        Button backButton = summaryPanel.GetComponentInChildren<Button>();
-        if (backButton != null) backButton.gameObject.SetActive(true);
-
         int correct = 0;
-        float totalRT = 0f, congruentRT = 0f, incongruentRT = 0f;
-        int totalCount = 0, congruentCount = 0, incongruentCount = 0;
+        float totalRT = 0, congRT = 0, incongRT = 0;
+        int totalN = 0, congN = 0, incongN = 0;
 
         foreach (var r in results)
         {
             if (r.isPractice) continue;
 
-            totalCount++;
+            totalN++;
             if (r.isCorrect) correct++;
-            totalRT += r.reactionTime;
 
-            if (r.isCongruent)
-            {
-                congruentRT += r.reactionTime;
-                congruentCount++;
-            }
-            else
-            {
-                incongruentRT += r.reactionTime;
-                incongruentCount++;
-            }
+            totalRT += r.reactionTime;
+            if (r.isCongruent) { congRT += r.reactionTime; congN++; }
+            else { incongRT += r.reactionTime; incongN++; }
         }
 
-        float avgRT = totalCount > 0 ? totalRT / totalCount : 0f;
-        float avgCongRT = congruentCount > 0 ? congruentRT / congruentCount : 0f;
-        float avgIncongRT = incongruentCount > 0 ? incongruentRT / incongruentCount : 0f;
-        float diffRT = avgIncongRT - avgCongRT;
-        float accuracy = totalCount > 0 ? (float)correct / totalCount * 100f : 0f;
+        float avgRT = totalN > 0 ? totalRT / totalN : 0;
+        float avgCongRT = congN > 0 ? congRT / congN : 0;
+        float avgIncong = incongN > 0 ? incongRT / incongN : 0;
+        float diffRT = avgIncong - avgCongRT;
+        float accuracy = totalN > 0 ? (float)correct / totalN * 100f : 0f;
 
         summaryText.text =
             $"Flanker Task Summary\n" +
-            "-------------------------\n" +
+            "------------------------------\n" +
             $"Practice Trials: {practiceTrialsCount} (not scored)\n\n" +
             $"Test Trials: {testTrialsCount}\n" +
-            $"Correct: {correct}\n" +
+            $"Correct:   {correct}\n" +
             $"Incorrect: {testTrialsCount - correct}\n" +
-            $"Accuracy: {accuracy:F1}%\n\n" +
-            $"Avg RT: {avgRT * 1000f:F0} ms\n" +
-            $"Congruent RT: {avgCongRT * 1000f:F0} ms\n" +
-            $"Incongruent RT: {avgIncongRT * 1000f:F0} ms\n" +
-            $"RT Difference: {diffRT * 1000f:F0} ms";
+            $"Accuracy:  {accuracy:F1}%\n\n" +
+            $"Avg RT:          {avgRT * 1000f:F0} ms\n" +
+            $"Congruent RT:    {avgCongRT * 1000f:F0} ms\n" +
+            $"Incongruent RT:  {avgIncong * 1000f:F0} ms\n" +
+            $"RT Difference:   {diffRT * 1000f:F0} ms";
 
         summaryPanel.SetActive(true);
     }

@@ -1,25 +1,38 @@
 using UnityEngine;
 
+/// <summary>
+/// Autonomous “fake” bird that drifts right, flaps every jumpInterval
+/// and destroys itself once it is beyond destroyX in world-space.
+/// </summary>
+[RequireComponent(typeof(SpriteRenderer))]
 public class FakePlayerMover : MonoBehaviour
 {
-    public float speed = 5f;
-    public float gravity = -9.8f;
-    public float strength = 5f;
-    public float jumpInterval = 1.1f;
+    [Header("Movement")]
+    public float speed = 5f;    // horizontal
+    [SerializeField] private float gravity = -9.8f;
+    [SerializeField] private float strength = 5f;     // jump impulse
+    [SerializeField] private float jumpInterval = 1.1f;
+    [SerializeField] private float destroyX = 10f;    // off-screen
 
-    public Sprite[] sprites;
+    [Header("Visuals")]
+    public Sprite[] sprites;          // assigned per prefab
+    [SerializeField] private float frameTime = 0.15f;
+
+    [Header("Audio")]
+    public AudioClip flySound;        // optional wing-flap sfx
+
+    /* ??????????????????????????? runtime ????????????????????????????*/
     private SpriteRenderer spriteRenderer;
-    private int spriteIndex;
-
-    public AudioClip flySound;
     private AudioSource audioSource;
 
     private Vector3 direction;
     private float jumpTimer;
+    private int spriteIndex;
 
     private void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
+
         audioSource = gameObject.AddComponent<AudioSource>();
         audioSource.loop = false;
         audioSource.playOnAwake = false;
@@ -27,54 +40,45 @@ public class FakePlayerMover : MonoBehaviour
 
     private void Start()
     {
-        direction = Vector3.up * strength; // ? jump immediately on spawn
+        direction = Vector3.up * strength;   // small lift on spawn
         jumpTimer = 0f;
 
-        if (flySound != null)
-        {
-            audioSource.PlayOneShot(flySound);
-        }
-
-        InvokeRepeating(nameof(AnimateSprite), 0.15f, 0.15f);
+        PlayFlapSfx();
+        InvokeRepeating(nameof(AnimateSprite), frameTime, frameTime);
     }
 
     private void Update()
     {
-        // Horizontal movement
+        /* horizontal drift */
         transform.position += Vector3.right * speed * Time.deltaTime;
 
-        // Gravity
+        /* gravity & auto-flap */
         direction.y += gravity * Time.deltaTime;
         transform.position += direction * Time.deltaTime;
 
-        // Auto jump every interval
         jumpTimer += Time.deltaTime;
         if (jumpTimer >= jumpInterval)
         {
             direction = Vector3.up * strength;
             jumpTimer = 0f;
-
-            if (flySound != null)
-                audioSource.PlayOneShot(flySound);
+            PlayFlapSfx();
         }
 
-        // Destroy when off screen
-        if (transform.position.x > 10f)
-        {
+        /* clean-up */
+        if (transform.position.x > destroyX)
             Destroy(gameObject);
-        }
     }
 
     private void AnimateSprite()
     {
         if (sprites == null || sprites.Length == 0) return;
 
-        spriteIndex++;
-        if (spriteIndex >= sprites.Length)
-        {
-            spriteIndex = 0;
-        }
-
+        spriteIndex = (spriteIndex + 1) % sprites.Length;
         spriteRenderer.sprite = sprites[spriteIndex];
+    }
+
+    private void PlayFlapSfx()
+    {
+        if (flySound) audioSource.PlayOneShot(flySound);
     }
 }

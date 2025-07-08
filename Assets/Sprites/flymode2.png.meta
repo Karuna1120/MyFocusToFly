@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 8c492c6376021d24191a89dc15e5f7ed
+guid: 131a31428bdd3984ab60ff07ac051f57
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 9194978854405709743
-    second: AttactPlane_Right_0
+      213: -6492214714968616696
+    second: flymode2_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -126,13 +126,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: AttactPlane_Right_0
+      name: flymode2_0
       rect:
         serializedVersion: 2
-        x: 371
-        y: 335
-        width: 4345
-        height: 2407
+        x: 0
+        y: 679
+        width: 5280
+        height: 1870
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -141,8 +141,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: faf941e0d802b9f70800000000000000
-      internalID: 9194978854405709743
+      spriteID: 8015bbc2d1507e5a0800000000000000
+      internalID: -6492214714968616696
       vertices: []
       indices: 
       edges: []
@@ -161,7 +161,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      AttactPlane_Right_0: 9194978854405709743
+      flymode2_0: -6492214714968616696
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

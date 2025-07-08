@@ -1,24 +1,19 @@
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
 public class MainMenu : MonoBehaviour
 {
-    public void FlyGame()
+    /// <summary>
+    /// Called by the “Medium 1” and “Medium 2” buttons.
+    /// The button’s OnClick passes either 1 or 2.
+    /// </summary>
+    public void StartFlyGame(int variant)
     {
-       
-        UnityEngine.SceneManagement.SceneManager.LoadScene("GameSceneReal");
-        Debug.Log("Start Game");
+        PlayerPrefs.SetInt("FakeVariant", variant);   // remember the choice
+        SceneManager.LoadScene("GameSceneReal");
     }
-    public void FlankerGame()
-    {
 
-        UnityEngine.SceneManagement.SceneManager.LoadScene("FlankerScene");
-        Debug.Log("Flanker Game");
-    }
-    public void QuitGame()
-    {
-        Application.Quit();
-        Debug.Log("Quit Game");
-    }
+    // Existing options you already had
+    public void FlankerGame() => SceneManager.LoadScene("FlankerScene");
+    public void QuitGame() => Application.Quit();
 }

@@ -12,8 +12,9 @@ GameObject:
   - component: {fileID: 335094930424446998}
   - component: {fileID: 8546398428335861155}
   - component: {fileID: 8878323558217953124}
+  - component: {fileID: 5144703715108111046}
   m_Layer: 0
-  m_Name: FakePlayer
+  m_Name: FakePlayer 2
   m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -29,7 +30,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.03, y: 0.03, z: 0.05}
+  m_LocalScale: {x: 0.05, y: 0.05, z: 0.05}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -78,7 +79,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: -855298285791758126, guid: 7a81ece580fb3a44ab09eb1bdad4a0ce, type: 3}
+  m_Sprite: {fileID: -3426426132120783949, guid: fb3e1613cac571642b9be4ed11043229, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -86,7 +87,7 @@ SpriteRenderer:
   m_Size: {x: 24.660002, y: 15.662896}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 0
+  m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!82 &8546398428335861155
@@ -213,3 +214,21 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
+--- !u!114 &5144703715108111046
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4935668820599745457}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c0507e4de8582b34ebedeaf6ac544dc7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  player: {fileID: 8708438139414251160}
+  verticalOffset: 1.2
+  sprites:
+  - {fileID: -3426426132120783949, guid: fb3e1613cac571642b9be4ed11043229, type: 3}
+  - {fileID: 6748128414941825974, guid: 94806db1367dddb43898c574ea70c9dc, type: 3}
+  - {fileID: -298481237103105520, guid: 79c24addf9f4d7d4e8b9d50c9d0bc4bb, type: 3}

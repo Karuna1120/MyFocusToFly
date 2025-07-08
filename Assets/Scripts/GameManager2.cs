@@ -1,12 +1,12 @@
-// GameManager2.cs with Black Flash Panel and Fake Interference
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
-using System.Collections;
 
 public class GameManager2 : MonoBehaviour
 {
+    /*????????????????????????????  PUBLIC UI REFERENCES  ???????????????????????????*/
     public Player player;
     public TMP_Text scoreText;
     public GameObject titleText;
@@ -16,34 +16,57 @@ public class GameManager2 : MonoBehaviour
     public GameObject summaryPanel;
     public TMP_Text summaryScoreText;
 
-    public GameObject fakePlayerPrefab;
-    public GameObject fakeShadowPrefab;
-    public GameObject blackFlashPanel; // full-screen black panel
+    /*????????????????????????????  VARIANT PREFABS (drag in Inspector) ??????????????*/
+    [Header("Variant-1 Prefabs")]
+    public GameObject fakePlayer1Prefab;   // moving fake target
+    public GameObject fakeShadow1Prefab;   // mirror follower
 
+    [Header("Variant-2 Prefabs")]
+    public GameObject fakePlayer2Prefab;
+    public GameObject fakeShadow2Prefab;
 
+    /*????????????????????????????  INTERNAL ACTIVE PREFABS  ?????????????????????????*/
+    private GameObject fakePlayerPrefab;   // points to *current* variant
+    private GameObject fakeShadowPrefab;
+
+    /*????????????????????????????  GAME STATE  ?????????????????????????*/
     private int score = 0;
     private int highScore = 0;
 
     private Coroutine groupSpawnRoutine;
     private Coroutine singleSpawnRoutine;
     private Coroutine mirrorRoutine;
-    private Coroutine flashRoutine;  
 
-
+    /*????????????????????????????  UNITY LIFECYCLE  ????????????????????*/
     private void Awake()
     {
         Application.targetFrameRate = 60;
+
+        // Retrieve the player’s menu choice (default = 1)
+        int variant = PlayerPrefs.GetInt("FakeVariant", 1);
+
+        if (variant == 1)
+        {
+            fakePlayerPrefab = fakePlayer1Prefab;
+            fakeShadowPrefab = fakeShadow1Prefab;
+        }
+        else
+        {
+            fakePlayerPrefab = fakePlayer2Prefab;
+            fakeShadowPrefab = fakeShadow2Prefab;
+        }
+
         highScore = PlayerPrefs.GetInt("highScore", 0);
-        Pause();
-
-
+        Pause();            // start in menu state
     }
 
+    /*????????????????????????????  PUBLIC BUTTON HOOKS  ???????????????????????????*/
     public void Play()
     {
-        // Clean up old fake players
+        // Clean up leftovers from previous run
         foreach (var f in FindObjectsOfType<FakePlayerMover>()) Destroy(f.gameObject);
         foreach (var s in FindObjectsOfType<FakeShadowPlayer>()) Destroy(s.gameObject);
+        foreach (var t in FindObjectsOfType<Towers>()) Destroy(t.gameObject);
 
         score = 0;
         scoreText.text = score.ToString();
@@ -54,27 +77,20 @@ public class GameManager2 : MonoBehaviour
         restartButton.SetActive(false);
         summaryPanel.SetActive(false);
 
-        foreach (Towers t in FindObjectsOfType<Towers>()) Destroy(t.gameObject);
-
         Time.timeScale = 1f;
         player.enabled = true;
 
-        // Start all fake spawners
         groupSpawnRoutine = StartCoroutine(LoopSpawnFakeGroup());
         singleSpawnRoutine = StartCoroutine(LoopSpawnFakeSingle());
         mirrorRoutine = StartCoroutine(LoopSpawnFakeShadow());
-        flashRoutine = StartCoroutine(LoopRandomBlackFlash());
     }
 
     public void GameOver()
     {
-        Pause();
-
+        Pause();                       // stop time & player
         restartButton.SetActive(true);
         gameOverPanel.SetActive(true);
         summaryPanel.SetActive(true);
-        if (blackFlashPanel != null) blackFlashPanel.SetActive(false);
-
 
         if (score > highScore)
         {
@@ -84,11 +100,9 @@ public class GameManager2 : MonoBehaviour
 
         summaryScoreText.text = $"Score: {score}  |  High Score: {highScore}";
 
-        // Stop routines
         if (groupSpawnRoutine != null) StopCoroutine(groupSpawnRoutine);
         if (singleSpawnRoutine != null) StopCoroutine(singleSpawnRoutine);
         if (mirrorRoutine != null) StopCoroutine(mirrorRoutine);
-        if (flashRoutine != null) StopCoroutine(flashRoutine);
     }
 
     public void Restart() => Play();
@@ -106,6 +120,7 @@ public class GameManager2 : MonoBehaviour
         highScore = 0;
     }
 
+    /*????????????????????????????  PRIVATE HELPERS  ???????????????????????????????*/
     private void Pause()
     {
         Time.timeScale = 0f;
@@ -115,17 +130,16 @@ public class GameManager2 : MonoBehaviour
         playButton.SetActive(true);
     }
 
-    // Spawn 25 fake players at random heights every few seconds
+    /*??????????????????????????  COROUTINES  ??????????????????????????*/
     private IEnumerator LoopSpawnFakeGroup()
     {
         while (true)
         {
             yield return new WaitForSeconds(6f);
-            StartCoroutine(SpawnFakePlayers());
+            yield return StartCoroutine(SpawnFakePlayers());
         }
     }
 
-    // Spawn 1 fake near player every 8 seconds
     private IEnumerator LoopSpawnFakeSingle()
     {
         while (true)
@@ -135,65 +149,32 @@ public class GameManager2 : MonoBehaviour
         }
     }
 
-    // Spawn 1 mirror fake that mimics player every 3 seconds for 3 seconds
     private IEnumerator LoopSpawnFakeShadow()
     {
         while (true)
         {
             yield return new WaitForSeconds(3f);
 
-            GameObject fake = Instantiate(fakeShadowPrefab, player.transform.position, Quaternion.identity);
-            var controller = fake.AddComponent<FakeShadowPlayer>();
-            controller.player = player.transform;
-            controller.sprites = player.GetComponent<Player>().sprites;
+            // spawn the prefab at the player’s position
+            GameObject fake = Instantiate(fakeShadowPrefab,
+                                          player.transform.position,
+                                          Quaternion.identity);
+
+            // simply tell its script who to follow
+            FakeShadowPlayer sp = fake.GetComponent<FakeShadowPlayer>();
+            if (sp != null) sp.player = player.transform;
 
             yield return new WaitForSeconds(3f);
-            if (fake != null) Destroy(fake);
+            if (fake) Destroy(fake);   // vanish after 3 s
         }
     }
 
-    // Random black screen that flashes and stays for 4 seconds
-    private IEnumerator LoopRandomBlackFlash()
-    {
-        Image img = blackFlashPanel.GetComponent<Image>();
-        if (img == null) yield break;
-
-        while (true)
-        {
-            yield return new WaitForSeconds(Random.Range(5f, 10f));
-            blackFlashPanel.SetActive(true);
-
-
-
-            float flashDuration = 4f;
-            float flashInterval = 0.2f;
-            float timer = 0f;
-            bool visible = true;
-
-            // 4 sec
-            while (timer < flashDuration)
-            {
-                float alpha = visible ? 1f : 0f;  // color alpha value
-                img.color = new Color(0f, 0f, 0f, alpha);
-                visible = !visible;
-
-                yield return new WaitForSeconds(flashInterval);
-                timer += flashInterval;
-            }
-
-
-            // hide the panel after flashing
-            blackFlashPanel.SetActive(false);
-        }
-    }
-
-    // Spawns a group of 25 fake players
     private IEnumerator SpawnFakePlayers()
     {
         float minY = Camera.main.ScreenToWorldPoint(new Vector3(0, 0)).y;
         float maxY = Camera.main.ScreenToWorldPoint(new Vector3(0, Screen.height)).y;
 
-        for (int i = 0; i < 25; i++)
+        for (int i = 0; i < 15; i++)
         {
             float randomY = Random.Range(minY, maxY);
             Vector3 spawnPos = new Vector3(-9f, randomY, 0);
@@ -205,7 +186,6 @@ public class GameManager2 : MonoBehaviour
         }
     }
 
-    // Spawn 1 fake player at player's position
     private void SpawnTargetFakePlayer()
     {
         Vector3 spawnPos = player.transform.position;
