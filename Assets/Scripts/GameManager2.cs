@@ -42,7 +42,6 @@ public class GameManager2 : MonoBehaviour
     {
         Application.targetFrameRate = 60;
 
-        // Retrieve the player’s menu choice (default = 1)
         int variant = PlayerPrefs.GetInt("FakeVariant", 1);
 
         if (variant == 1)
@@ -57,7 +56,7 @@ public class GameManager2 : MonoBehaviour
         }
 
         highScore = PlayerPrefs.GetInt("highScore", 0);
-        Pause();            // start in menu state
+        Pause();          
     }
 
     /*????????????????????????????  PUBLIC BUTTON HOOKS  ???????????????????????????*/
